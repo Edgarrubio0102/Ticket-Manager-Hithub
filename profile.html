@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil del Cliente - Portal del Cliente</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEuZQqv1cwxKYO6O3sYCEH7wAZHRioC+5A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Estilos personalizados adicionales */
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+        }
+        .hover-scale {
+            transition: transform 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col gradient-bg text-gray-100 font-sans">
+    <!-- Menú de Navegación -->
+    <nav class="bg-white shadow-lg py-4 px-6 flex justify-between items-center sticky top-0 z-50">
+        <div class="text-xl font-bold text-gray-800">
+            <a href="home.html" class="hover:text-blue-600 transition-colors">TicketMaster</a>
+        </div>
+        <div class="space-x-6">
+            <a href="home.html" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-home mr-1"></i> Inicio</a>
+            <a href="tickets-form.html" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-ticket-alt mr-1"></i> Crear Ticket</a>
+            <a href="tickets-status.html" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-list mr-1"></i> Mis Tickets</a>
+            <a href="#" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-user mr-1"></i> Perfil</a>
+            <a href="#" id="logoutBtn" class="text-gray-600 hover:text-red-600 transition-colors"><i class="fas fa-sign-out-alt mr-1"></i> Cerrar Sesión</a>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="flex-grow flex items-center justify-center py-12 px-4">
+        <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
+            <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">Mi Perfil</h1>
+            <form id="profileForm" class="space-y-6">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">Nombre</label>
+                    <input type="text" id="name" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Tu nombre">
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+                    <input type="email" id="email" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="tu@correo.com" readonly>
+                </div>
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700">Teléfono (Opcional)</label>
+                    <input type="tel" id="phone" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="123-456-7890">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 hover-scale transition-colors">Guardar Cambios</button>
+            </form>
+            <p id="successMessage" class="text-green-500 text-center mt-4 hidden">Perfil actualizado con éxito.</p>
+            <p id="errorMessage" class="text-red-500 text-center mt-4 hidden"></p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 py-4 text-center">
+        <p>© 2025 TicketMaster. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA7BYQx6Fxz9BNRX9bcIRAawbdS258XFoE",
+            authDomain: "ticket-cotizador-1.firebaseapp.com",
+            projectId: "ticket-cotizador-1",
+            storageBucket: "ticket-cotizador-1.firebasestorage.app",
+            messagingSenderId: "185634330034",
+            appId: "1:185634330034:web:5429c6dbfc64fc6d4dc0ab"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // DOM Elements
+        const profileForm = document.getElementById('profileForm');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        const successMessage = document.getElementById('successMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // Load User Data
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Obtener datos del usuario desde Firestore
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    nameInput.value = userData.name || '';
+                    emailInput.value = user.email; // Correo no editable, solo de lectura
+                    phoneInput.value = userData.phone || '';
+                } else {
+                    // Si no existe el documento, crear uno básico
+                    await setDoc(doc(db, "users", user.uid), {
+                        email: user.email,
+                        role: "client",
+                        name: user.email.split('@')[0], // Fallback usando parte del email
+                        phone: ''
+                    });
+                    nameInput.value = user.email.split('@')[0];
+                    emailInput.value = user.email;
+                }
+            } else {
+                // Redirigir a login si no hay usuario autenticado
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Save Profile Changes
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (user) {
+                try {
+                    const updatedData = {
+                        name: nameInput.value.trim(),
+                        phone: phoneInput.value.trim() || null
+                    };
+                    await updateDoc(doc(db, "users", user.uid), updatedData);
+                    successMessage.classList.remove('hidden');
+                    errorMessage.classList.add('hidden');
+                    setTimeout(() => successMessage.classList.add('hidden'), 3000); // Ocultar mensaje después de 3 segundos
+                } catch (error) {
+                    errorMessage.textContent = 'Error: ' + error.message;
+                    errorMessage.classList.remove('hidden');
+                    successMessage.classList.add('hidden');
+                }
+            }
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).then(() => {
+                console.log('Logged out');
+                window.location.href = 'index.html';
+            }).catch((error) => {
+                console.error('Logout error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
