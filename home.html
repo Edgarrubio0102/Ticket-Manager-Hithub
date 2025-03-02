@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Principal - Portal del Cliente</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEuZQqv1cwxKYO6O3sYCEH7wAZHRioC+5A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Estilos personalizados adicionales */
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+        }
+        .hover-scale {
+            transition: transform 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col gradient-bg text-gray-100 font-sans">
+    <!-- Menú de Navegación -->
+    <nav class="bg-white shadow-lg py-4 px-6 flex justify-between items-center sticky top-0 z-50">
+        <div class="text-xl font-bold text-gray-800">
+            <a href="index.html" class="hover:text-blue-600 transition-colors">TicketMaster</a>
+        </div>
+        <div class="space-x-6">
+            <a href="#" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-home mr-1"></i> Inicio</a>
+            <a href="tickets-form.html" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-ticket-alt mr-1"></i> Crear Ticket</a>
+            <a href="tickets-status.html" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-list mr-1"></i> Mis Tickets</a>
+            <a href="profile.html" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-user mr-1"></i> Perfil</a>
+            <a href="#" id="logoutBtn" class="text-gray-600 hover:text-red-600 transition-colors"><i class="fas fa-sign-out-alt mr-1"></i> Cerrar Sesión</a>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="flex-grow flex items-center justify-center py-12 px-4">
+        <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-2xl text-center">
+            <h1 class="text-3xl font-bold text-gray-800 mb-4">Bienvenido, <span id="userName">Cliente</span></h1>
+            <p class="text-gray-600 mb-6">Aquí puedes gestionar tus tickets y solicitudes de cotización de manera fácil y rápida.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <a href="tickets-form.html" class="bg-blue-600 text-white py-4 px-6 rounded-lg hover:bg-blue-700 hover-scale transition-colors">
+                    <i class="fas fa-ticket-alt mr-2"></i> Crear Nuevo Ticket
+                </a>
+                <a href="tickets-status.html" class="bg-gray-200 text-gray-800 py-4 px-6 rounded-lg hover:bg-gray-300 hover-scale transition-colors">
+                    <i class="fas fa-list mr-2"></i> Ver Mis Tickets
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 py-4 text-center">
+        <p>© 2025 TicketMaster. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA7BYQx6Fxz9BNRX9bcIRAawbdS258XFoE",
+            authDomain: "ticket-cotizador-1.firebaseapp.com",
+            projectId: "ticket-cotizador-1",
+            storageBucket: "ticket-cotizador-1.firebasestorage.app",
+            messagingSenderId: "185634330034",
+            appId: "1:185634330034:web:5429c6dbfc64fc6d4dc0ab"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // DOM Elements
+        const userName = document.getElementById('userName');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // Check Auth State and Fetch User Name
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Obtener datos del usuario desde Firestore
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    const name = userDoc.data().name || user.email.split('@')[0]; // Usa nombre o parte del email
+                    userName.textContent = name;
+                } else {
+                    userName.textContent = user.email.split('@')[0]; // Fallback si no hay datos
+                }
+            } else {
+                // Redirigir a login si no hay usuario autenticado
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).then(() => {
+                console.log('Logged out');
+                window.location.href = 'index.html';
+            }).catch((error) => {
+                console.error('Logout error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

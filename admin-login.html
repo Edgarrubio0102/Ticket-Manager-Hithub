@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de Sesión - Panel del Administrador</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEuZQqv1cwxKYO6O3sYCEH7wAZHRioC+5A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Estilos personalizados adicionales */
+        .gradient-bg-admin {
+            background: linear-gradient(135deg, #4b5563, #9ca3af);
+        }
+        .hover-scale {
+            transition: transform 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col gradient-bg-admin text-gray-100 font-sans">
+    <!-- Menú de Navegación -->
+    <nav class="bg-white shadow-lg py-4 px-6 flex justify-between items-center sticky top-0 z-50">
+        <div class="text-xl font-bold text-gray-800">
+            <a href="index.html" class="hover:text-blue-600 transition-colors">TicketMaster</a>
+        </div>
+        <div class="space-x-6">
+            <a href="index.html" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-home mr-1"></i> Portal Cliente</a>
+            <a href="#" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-ticket-alt mr-1"></i> Tickets</a>
+            <a href="#" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-chart-line mr-1"></i> Dashboard</a>
+            <a href="#" id="logoutBtn" class="text-gray-600 hover:text-red-600 transition-colors hidden"><i class="fas fa-sign-out-alt mr-1"></i> Cerrar Sesión</a>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="flex-grow flex items-center justify-center py-12 px-4">
+        <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
+            <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">Panel del Administrador</h1>
+            <div id="authContainer">
+                <!-- Formulario de Inicio de Sesión -->
+                <div id="loginForm" class="space-y-6">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+                        <input type="email" id="email" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-gray-500 focus:outline-none" placeholder="admin@correo.com">
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
+                        <input type="password" id="password" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-gray-500 focus:outline-none" placeholder="••••••••">
+                    </div>
+                    <button id="loginBtn" class="w-full bg-gray-600 text-white py-2 rounded-lg hover:bg-gray-700 hover-scale transition-colors">Iniciar Sesión</button>
+                    <p class="text-center text-sm text-gray-600">¿Volver al portal cliente? <a href="index.html" class="text-blue-600 hover:underline">Haz clic aquí</a></p>
+                </div>
+            </div>
+            <p id="errorMessage" class="text-red-500 text-center mt-4 hidden"></p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 py-4 text-center">
+        <p>© 2025 TicketMaster. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA7BYQx6Fxz9BNRX9bcIRAawbdS258XFoE",
+            authDomain: "ticket-cotizador-1.firebaseapp.com",
+            projectId: "ticket-cotizador-1",
+            storageBucket: "ticket-cotizador-1.firebasestorage.app",
+            messagingSenderId: "185634330034",
+            appId: "1:185634330034:web:5429c6dbfc64fc6d4dc0ab"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // DOM Elements
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Login with Role Check
+        loginBtn.addEventListener('click', () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            signInWithEmailAndPassword(auth, email, password)
+                .then(async (userCredential) => {
+                    const user = userCredential.user;
+                    // Verificar rol en Firestore
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists() && userDoc.data().role === "admin") {
+                        console.log('Admin logged in:', user);
+                        window.location.href = 'admin-dashboard.html'; // Redirige al dashboard (crear después)
+                    } else {
+                        signOut(auth); // Cerrar sesión si no es admin
+                        errorMessage.textContent = 'Error: Acceso solo para administradores.';
+                        errorMessage.classList.remove('hidden');
+                    }
+                })
+                .catch((error) => {
+                    errorMessage.textContent = 'Error: ' + error.message;
+                    errorMessage.classList.remove('hidden');
+                });
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).then(() => {
+                console.log('Logged out');
+                logoutBtn.classList.add('hidden');
+            });
+        });
+
+        // Check Auth State
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                logoutBtn.classList.remove('hidden');
+            } else {
+                logoutBtn.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

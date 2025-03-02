@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de Sesión/Registro - Sistema de Tickets</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEuZQqv1cwxKYO6O3sYCEH7wAZHRioC+5A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Estilos personalizados adicionales */
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+        }
+        .hover-scale {
+            transition: transform 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col gradient-bg text-gray-100 font-sans">
+    <!-- Menú de Navegación -->
+    <nav class="bg-white shadow-lg py-4 px-6 flex justify-between items-center sticky top-0 z-50">
+        <div class="text-xl font-bold text-gray-800">
+            <a href="#" class="hover:text-blue-600 transition-colors">TicketMaster</a>
+        </div>
+        <div class="space-x-6">
+            <a href="#" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-home mr-1"></i> Inicio</a>
+            <a href="#" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-ticket-alt mr-1"></i> Tickets</a>
+            <a href="#" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-user mr-1"></i> Perfil</a>
+            <a href="#" id="logoutBtn" class="text-gray-600 hover:text-red-600 transition-colors hidden"><i class="fas fa-sign-out-alt mr-1"></i> Cerrar Sesión</a>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="flex-grow flex items-center justify-center py-12 px-4">
+        <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
+            <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">Bienvenido</h1>
+            <div id="authContainer">
+                <!-- Formulario de Inicio de Sesión -->
+                <div id="loginForm" class="space-y-6">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+                        <input type="email" id="email" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="tu@correo.com">
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
+                        <input type="password" id="password" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="••••••••">
+                    </div>
+                    <button id="loginBtn" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 hover-scale transition-colors">Iniciar Sesión</button>
+                    <p class="text-center text-sm text-gray-600">¿No tienes cuenta? <a href="#" id="showRegister" class="text-blue-600 hover:underline">Regístrate</a></p>
+                </div>
+
+                <!-- Formulario de Registro -->
+                <div id="registerForm" class="space-y-6 hidden">
+                    <div>
+                        <label for="regEmail" class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+                        <input type="email" id="regEmail" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="tu@correo.com">
+                    </div>
+                    <div>
+                        <label for="regPassword" class="block text-sm font-medium text-gray-700">Contraseña</label>
+                        <input type="password" id="regPassword" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="••••••••">
+                    </div>
+                    <div>
+                        <label for="regName" class="block text-sm font-medium text-gray-700">Nombre</label>
+                        <input type="text" id="regName" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Tu nombre">
+                    </div>
+                    <button id="registerBtn" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 hover-scale transition-colors">Registrarse</button>
+                    <p class="text-center text-sm text-gray-600">¿Ya tienes cuenta? <a href="#" id="showLogin" class="text-blue-600 hover:underline">Inicia Sesión</a></p>
+                </div>
+            </div>
+            <p id="errorMessage" class="text-red-500 text-center mt-4 hidden"></p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 py-4 text-center">
+        <p>&copy; 2025 TicketMaster. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA7BYQx6Fxz9BNRX9bcIRAawbdS258XFoE",
+            authDomain: "ticket-cotizador-1.firebaseapp.com",
+            projectId: "ticket-cotizador-1",
+            storageBucket: "ticket-cotizador-1.firebasestorage.app",
+            messagingSenderId: "185634330034",
+            appId: "1:185634330034:web:5429c6dbfc64fc6d4dc0ab"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // DOM Elements
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const showRegister = document.getElementById('showRegister');
+        const showLogin = document.getElementById('showLogin');
+        const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Toggle Forms
+        showRegister.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+        });
+
+        showLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            registerForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+        });
+
+        // Login
+        loginBtn.addEventListener('click', () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    console.log('Logged in:', userCredential.user);
+                    window.location.href = 'home.html'; // Redirige a la página principal (crear después)
+                })
+                .catch((error) => {
+                    errorMessage.textContent = 'Error: ' + error.message;
+                    errorMessage.classList.remove('hidden');
+                });
+        });
+
+        // Register
+        registerBtn.addEventListener('click', () => {
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const name = document.getElementById('regName').value;
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    console.log('Registered:', userCredential.user);
+                    window.location.href = 'home.html'; // Redirige a la página principal
+                })
+                .catch((error) => {
+                    errorMessage.textContent = 'Error: ' + error.message;
+                    errorMessage.classList.remove('hidden');
+                });
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).then(() => {
+                console.log('Logged out');
+                logoutBtn.classList.add('hidden');
+            });
+        });
+
+        // Check Auth State
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                logoutBtn.classList.remove('hidden');
+            } else {
+                logoutBtn.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
