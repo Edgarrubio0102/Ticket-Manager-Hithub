@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración - Panel del Administrador</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEuZQqv1cwxKYO6O3sYCEH7wAZHRioC+5A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Estilos personalizados adicionales */
+        .gradient-bg-admin {
+            background: linear-gradient(135deg, #4b5563, #9ca3af);
+        }
+        .hover-scale {
+            transition: transform 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col gradient-bg-admin text-gray-100 font-sans">
+    <!-- Menú de Navegación -->
+    <nav class="bg-white shadow-lg py-4 px-6 flex justify-between items-center sticky top-0 z-50">
+        <div class="text-xl font-bold text-gray-800">
+            <a href="admin-login.html" class="hover:text-blue-600 transition-colors">TicketMaster</a>
+        </div>
+        <div class="space-x-6">
+            <a href="admin-login.html" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-home mr-1"></i> Portal Cliente</a>
+            <a href="admin-tickets.html" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-ticket-alt mr-1"></i> Tickets</a>
+            <a href="admin-dashboard.html" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-chart-line mr-1"></i> Dashboard</a>
+            <a href="#" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-cog mr-1"></i> Configuración</a>
+            <a href="#" id="logoutBtn" class="text-gray-600 hover:text-red-600 transition-colors"><i class="fas fa-sign-out-alt mr-1"></i> Cerrar Sesión</a>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="flex-grow flex items-center justify-center py-12 px-4">
+        <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-4xl">
+            <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">Configuración</h1>
+            <div class="tabs mb-8">
+                <button id="usersTab" class="tab-button px-4 py-2 bg-gray-200 rounded-tl-lg hover:bg-gray-300 hover-scale transition-colors active">Usuarios</button>
+                <button id="categoriesTab" class="tab-button px-4 py-2 bg-gray-200 rounded-tr-lg hover:bg-gray-300 hover-scale transition-colors">Categorías</button>
+            </div>
+            <div id="usersSection" class="tab-content">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Gestionar Usuarios</h2>
+                <div id="usersList" class="space-y-4 max-h-64 overflow-y-auto"></div>
+                <form id="addUserForm" class="mt-6 space-y-4">
+                    <div>
+                        <label for="newUserEmail" class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+                        <input type="email" id="newUserEmail" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-gray-500 focus:outline-none" placeholder="usuario@correo.com">
+                    </div>
+                    <div>
+                        <label for="newUserName" class="block text-sm font-medium text-gray-700">Nombre</label>
+                        <input type="text" id="newUserName" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-gray-500 focus:outline-none" placeholder="Nombre del usuario">
+                    </div>
+                    <div>
+                        <label for="newUserRole" class="block text-sm font-medium text-gray-700">Rol</label>
+                        <select id="newUserRole" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-gray-500 focus:outline-none">
+                            <option value="client">Cliente</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-gray-600 text-white py-2 rounded-lg hover:bg-gray-700 hover-scale transition-colors">Agregar Usuario</button>
+                </form>
+            </div>
+            <div id="categoriesSection" class="tab-content hidden">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Gestionar Categorías</h2>
+                <div id="categoriesList" class="space-y-4 max-h-64 overflow-y-auto"></div>
+                <form id="addCategoryForm" class="mt-6 space-y-4">
+                    <div>
+                        <label for="newCategoryName" class="block text-sm font-medium text-gray-700">Nombre de la Categoría</label>
+                        <input type="text" id="newCategoryName" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-gray-500 focus:outline-none" placeholder="Ej. Soporte Técnico">
+                    </div>
+                    <button type="submit" class="w-full bg-gray-600 text-white py-2 rounded-lg hover:bg-gray-700 hover-scale transition-colors">Agregar Categoría</button>
+                </form>
+            </div>
+            <p id="successMessage" class="text-green-500 text-center mt-4 hidden">Cambios guardados con éxito.</p>
+            <p id="errorMessage" class="text-red-500 text-center mt-4 hidden"></p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 py-4 text-center">
+        <p>© 2025 TicketMaster. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+        import { getFirestore, collection, query, onSnapshot, doc, setDoc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA7BYQx6Fxz9BNRX9bcIRAawbdS258XFoE",
+            authDomain: "ticket-cotizador-1.firebaseapp.com",
+            projectId: "ticket-cotizador-1",
+            storageBucket: "ticket-cotizador-1.firebasestorage.app",
+            messagingSenderId: "185634330034",
+            appId: "1:185634330034:web:5429c6dbfc64fc6d4dc0ab"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // DOM Elements
+        const usersTab = document.getElementById('usersTab');
+        const categoriesTab = document.getElementById('categoriesTab');
+        const usersSection = document.getElementById('usersSection');
+        const categoriesSection = document.getElementById('categoriesSection');
+        const usersList = document.getElementById('usersList');
+        const categoriesList = document.getElementById('categoriesList');
+        const addUserForm = document.getElementById('addUserForm');
+        const addCategoryForm = document.getElementById('addCategoryForm');
+        const successMessage = document.getElementById('successMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // Tab Switching
+        usersTab.addEventListener('click', () => {
+            usersTab.classList.add('active');
+            categoriesTab.classList.remove('active');
+            usersSection.classList.remove('hidden');
+            categoriesSection.classList.add('hidden');
+        });
+
+        categoriesTab.addEventListener('click', () => {
+            categoriesTab.classList.add('active');
+            usersTab.classList.remove('active');
+            categoriesSection.classList.remove('hidden');
+            usersSection.classList.add('hidden');
+        });
+
+        // Check Auth State and Role
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'admin-login.html';
+            } else {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists() && userDoc.data().role === "admin") {
+                    loadUsers();
+                    loadCategories();
+                } else {
+                    window.location.href = 'index.html'; // Redirigir a portal cliente si no es admin
+                }
+            }
+        });
+
+        // Load Users
+        function loadUsers() {
+            const q = query(collection(db, "users"));
+            onSnapshot(q, (snapshot) => {
+                usersList.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const user = doc.data();
+                    const userDiv = document.createElement('div');
+                    userDiv.className = 'p-4 border rounded-lg bg-gray-50';
+                    userDiv.innerHTML = `
+                        <p><strong>Correo:</strong> ${user.email}</p>
+                        <p><strong>Nombre:</strong> ${user.name || 'No especificado'}</p>
+                        <p><strong>Rol:</strong> ${user.role}</p>
+                        <select class="mt-2 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-gray-500 focus:outline-none role-select" data-uid="${doc.id}">
+                            <option value="client" ${user.role === 'client' ? 'selected' : ''}>Cliente</option>
+                            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Administrador</option>
+                        </select>
+                        <button class="mt-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 hover-scale transition-colors delete-user" data-uid="${doc.id}"><i class="fas fa-trash mr-1"></i> Eliminar</button>
+                    `;
+                    usersList.appendChild(userDiv);
+                });
+                // Añadir eventos a los selects y botones de eliminar
+                document.querySelectorAll('.role-select').forEach(select => {
+                    select.addEventListener('change', async (e) => {
+                        const uid = e.target.dataset.uid;
+                        try {
+                            await updateDoc(doc(db, "users", uid), { role: e.target.value });
+                            successMessage.classList.remove('hidden');
+                            errorMessage.classList.add('hidden');
+                            setTimeout(() => successMessage.classList.add('hidden'), 3000);
+                        } catch (error) {
+                            errorMessage.textContent = 'Error: ' + error.message;
+                            errorMessage.classList.remove('hidden');
+                            successMessage.classList.add('hidden');
+                        }
+                    });
+                });
+                document.querySelectorAll('.delete-user').forEach(button => {
+                    button.addEventListener('click', async (e) => {
+                        if (confirm('¿Estás seguro de eliminar este usuario?')) {
+                            const uid = e.target.dataset.uid;
+                            try {
+                                await deleteDoc(doc(db, "users", uid));
+                                successMessage.classList.remove('hidden');
+                                errorMessage.classList.add('hidden');
+                                setTimeout(() => successMessage.classList.add('hidden'), 3000);
+                            } catch (error) {
+                                errorMessage.textContent = 'Error: ' + error.message;
+                                errorMessage.classList.remove('hidden');
+                                successMessage.classList.add('hidden');
+                            }
+                        }
+                    });
+                });
+            }, (error) => {
+                errorMessage.textContent = 'Error al cargar usuarios: ' + error.message;
+                errorMessage.classList.remove('hidden');
+            });
+        }
+
+        // Load Categories
+        function loadCategories() {
+            const q = query(collection(db, "categories"));
+            onSnapshot(q, (snapshot) => {
+                categoriesList.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const category = doc.data();
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'p-4 border rounded-lg bg-gray-50';
+                    categoryDiv.innerHTML = `
+                        <p><strong>Nombre:</strong> ${category.name}</p>
+                        <button class="mt-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 hover-scale transition-colors delete-category" data-id="${doc.id}"><i class="fas fa-trash mr-1"></i> Eliminar</button>
+                    `;
+                    categoriesList.appendChild(categoryDiv);
+                });
+                // Añadir eventos a los botones de eliminar
+                document.querySelectorAll('.delete-category').forEach(button => {
+                    button.addEventListener('click', async (e) => {
+                        if (confirm('¿Estás seguro de eliminar esta categoría?')) {
+                            const id = e.target.dataset.id;
+                            try {
+                                await deleteDoc(doc(db, "categories", id));
+                                successMessage.classList.remove('hidden');
+                                errorMessage.classList.add('hidden');
+                                setTimeout(() => successMessage.classList.add('hidden'), 3000);
+                            } catch (error) {
+                                errorMessage.textContent = 'Error: ' + error.message;
+                                errorMessage.classList.remove('hidden');
+                                successMessage.classList.add('hidden');
+                            }
+                        }
+                    });
+                });
+            }, (error) => {
+                errorMessage.textContent = 'Error al cargar categorías: ' + error.message;
+                errorMessage.classList.remove('hidden');
+            });
+        }
+
+        // Add New User
+        addUserForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('newUserEmail').value;
+            const name = document.getElementById('newUserName').value;
+            const role = document.getElementById('newUserRole').value;
+            const password = 'DefaultPassword123!'; // Contraseña temporal, puedes mejorarla
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await setDoc(doc(db, "users", userCredential.user.uid), {
+                    email: email,
+                    name: name,
+                    role: role
+                });
+                addUserForm.reset();
+                successMessage.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+                setTimeout(() => successMessage.classList.add('hidden'), 3000);
+            } catch (error) {
+                errorMessage.textContent = 'Error: ' + error.message;
+                errorMessage.classList.remove('hidden');
+                successMessage.classList.add('hidden');
+            }
+        });
+
+        // Add New Category
+        addCategoryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('newCategoryName').value;
+
+            try {
+                await setDoc(doc(collection(db, "categories")), {
+                    name: name
+                });
+                addCategoryForm.reset();
+                successMessage.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+                setTimeout(() => successMessage.classList.add('hidden'), 3000);
+            } catch (error) {
+                errorMessage.textContent = 'Error: ' + error.message;
+                errorMessage.classList.remove('hidden');
+                successMessage.classList.add('hidden');
+            }
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).then(() => {
+                console.log('Logged out');
+                window.location.href = 'admin-login.html';
+            }).catch((error) => {
+                console.error('Logout error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
