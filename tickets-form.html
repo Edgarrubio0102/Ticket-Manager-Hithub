@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Ticket - Portal del Cliente</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEuZQqv1cwxKYO6O3sYCEH7wAZHRioC+5A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Estilos personalizados adicionales */
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+        }
+        .hover-scale {
+            transition: transform 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col gradient-bg text-gray-100 font-sans">
+    <!-- Menú de Navegación -->
+    <nav class="bg-white shadow-lg py-4 px-6 flex justify-between items-center sticky top-0 z-50">
+        <div class="text-xl font-bold text-gray-800">
+            <a href="home.html" class="hover:text-blue-600 transition-colors">TicketMaster</a>
+        </div>
+        <div class="space-x-6">
+            <a href="home.html" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-home mr-1"></i> Inicio</a>
+            <a href="#" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-ticket-alt mr-1"></i> Crear Ticket</a>
+            <a href="tickets-status.html" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-list mr-1"></i> Mis Tickets</a>
+            <a href="profile.html" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-user mr-1"></i> Perfil</a>
+            <a href="#" id="logoutBtn" class="text-gray-600 hover:text-red-600 transition-colors"><i class="fas fa-sign-out-alt mr-1"></i> Cerrar Sesión</a>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="flex-grow flex items-center justify-center py-12 px-4">
+        <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
+            <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">Crear Nuevo Ticket</h1>
+            <form id="ticketForm" class="space-y-6">
+                <div>
+                    <label for="ticketType" class="block text-sm font-medium text-gray-700">Tipo de Solicitud</label>
+                    <select id="ticketType" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="incidencia">Incidencia</option>
+                        <option value="cotizacion">Cotización</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="subject" class="block text-sm font-medium text-gray-700">Asunto</label>
+                    <input type="text" id="subject" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Título breve del ticket">
+                </div>
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700">Descripción</label>
+                    <textarea id="description" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Detalla el problema o solicitud" rows="4"></textarea>
+                </div>
+                <div>
+                    <label for="priority" class="block text-sm font-medium text-gray-700">Prioridad</label>
+                    <select id="priority" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="baja">Baja</option>
+                        <option value="media">Media</option>
+                        <option value="alta">Alta</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="attachments" class="block text-sm font-medium text-gray-700">Archivos Adjuntos (Opcional)</label>
+                    <input type="file" id="attachments" class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" accept="image/*,application/pdf" multiple>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 hover-scale transition-colors">Enviar Ticket</button>
+            </form>
+            <p id="successMessage" class="text-green-500 text-center mt-4 hidden">Ticket creado con éxito.</p>
+            <p id="errorMessage" class="text-red-500 text-center mt-4 hidden"></p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 py-4 text-center">
+        <p>© 2025 TicketMaster. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, collection, addDoc, getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+        import { getStorage as getStorageImport, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-storage.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA7BYQx6Fxz9BNRX9bcIRAawbdS258XFoE",
+            authDomain: "ticket-cotizador-1.firebaseapp.com",
+            projectId: "ticket-cotizador-1",
+            storageBucket: "ticket-cotizador-1.firebasestorage.app",
+            messagingSenderId: "185634330034",
+            appId: "1:185634330034:web:5429c6dbfc64fc6d4dc0ab"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorageImport(app);
+
+        // DOM Elements
+        const ticketForm = document.getElementById('ticketForm');
+        const successMessage = document.getElementById('successMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // Check Auth State
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Handle Ticket Submission
+        ticketForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) {
+                errorMessage.textContent = 'Debes iniciar sesión para crear un ticket.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const ticketData = {
+                    type: document.getElementById('ticketType').value,
+                    subject: document.getElementById('subject').value.trim(),
+                    description: document.getElementById('description').value.trim(),
+                    priority: document.getElementById('priority').value,
+                    userId: user.uid,
+                    email: user.email,
+                    status: 'abierto',
+                    createdAt: new Date().toISOString(),
+                    attachments: []
+                };
+
+                // Handle file attachments
+                const files = document.getElementById('attachments').files;
+                if (files.length > 0) {
+                    for (const file of files) {
+                        const storageRefPath = ref(storage, `tickets/${user.uid}/${Date.now()}_${file.name}`);
+                        const snapshot = await uploadBytes(storageRefPath, file);
+                        const downloadURL = await getDownloadURL(snapshot.ref);
+                        ticketData.attachments.push(downloadURL);
+                    }
+                }
+
+                // Save ticket to Firestore
+                await addDoc(collection(db, "tickets"), ticketData);
+                successMessage.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+                ticketForm.reset();
+                setTimeout(() => successMessage.classList.add('hidden'), 3000); // Ocultar mensaje después de 3 segundos
+            } catch (error) {
+                errorMessage.textContent = 'Error: ' + error.message;
+                errorMessage.classList.remove('hidden');
+                successMessage.classList.add('hidden');
+            }
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).then(() => {
+                console.log('Logged out');
+                window.location.href = 'index.html';
+            }).catch((error) => {
+                console.error('Logout error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
