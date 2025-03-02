@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Tickets - Portal del Cliente</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEuZQqv1cwxKYO6O3sYCEH7wAZHRioC+5A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Estilos personalizados adicionales */
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+        }
+        .hover-scale {
+            transition: transform 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.05);
+        }
+        .ticket-row {
+            transition: background-color 0.3s ease;
+        }
+        .ticket-row:hover {
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col gradient-bg text-gray-100 font-sans">
+    <!-- Menú de Navegación -->
+    <nav class="bg-white shadow-lg py-4 px-6 flex justify-between items-center sticky top-0 z-50">
+        <div class="text-xl font-bold text-gray-800">
+            <a href="home.html" class="hover:text-blue-600 transition-colors">TicketMaster</a>
+        </div>
+        <div class="space-x-6">
+            <a href="home.html" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-home mr-1"></i> Inicio</a>
+            <a href="tickets-form.html" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-ticket-alt mr-1"></i> Crear Ticket</a>
+            <a href="#" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-list mr-1"></i> Mis Tickets</a>
+            <a href="profile.html" class="text-gray-600 hover:text-blue-600 transition-colors"><i class="fas fa-user mr-1"></i> Perfil</a>
+            <a href="#" id="logoutBtn" class="text-gray-600 hover:text-red-600 transition-colors"><i class="fas fa-sign-out-alt mr-1"></i> Cerrar Sesión</a>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="flex-grow flex items-center justify-center py-12 px-4">
+        <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-4xl">
+            <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">Mis Tickets</h1>
+            <div class="mb-6 flex justify-center space-x-4">
+                <select id="filterStatus" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option value="all">Todos</option>
+                    <option value="abierto">Pendientes</option>
+                    <option value="en-progreso">En Progreso</option>
+                    <option value="resuelto">Resueltos</option>
+                    <option value="cerrado">Cerrados</option>
+                </select>
+            </div>
+            <div id="ticketsList" class="space-y-4 max-h-96 overflow-y-auto"></div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 py-4 text-center">
+        <p>© 2025 TicketMaster. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA7BYQx6Fxz9BNRX9bcIRAawbdS258XFoE",
+            authDomain: "ticket-cotizador-1.firebaseapp.com",
+            projectId: "ticket-cotizador-1",
+            storageBucket: "ticket-cotizador-1.firebasestorage.app",
+            messagingSenderId: "185634330034",
+            appId: "1:185634330034:web:5429c6dbfc64fc6d4dc0ab"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // DOM Elements
+        const ticketsList = document.getElementById('ticketsList');
+        const filterStatus = document.getElementById('filterStatus');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // Check Auth State
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'index.html';
+            } else {
+                loadTickets(user.uid);
+            }
+        });
+
+        // Load and Filter Tickets
+        function loadTickets(userId) {
+            let q = query(collection(db, "tickets"), where("userId", "==", userId), orderBy("createdAt", "desc"));
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                ticketsList.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const ticket = doc.data();
+                    if (filterStatus.value === 'all' || ticket.status === filterStatus.value) {
+                        const ticketDiv = document.createElement('div');
+                        ticketDiv.className = 'ticket-row p-4 border rounded-lg bg-gray-50';
+                        ticketDiv.innerHTML = `
+                            <p><strong>ID:</strong> ${doc.id}</p>
+                            <p><strong>Tipo:</strong> ${ticket.type === 'incidencia' ? 'Incidencia' : 'Cotización'}</p>
+                            <p><strong>Asunto:</strong> ${ticket.subject}</p>
+                            <p><strong>Estado:</strong> ${ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}</p>
+                            <p><strong>Fecha:</strong> ${new Date(ticket.createdAt).toLocaleDateString()}</p>
+                            ${ticket.attachments && ticket.attachments.length > 0 ? '<p><strong>Adjuntos:</strong> <a href="' + ticket.attachments[0] + '" target="_blank" class="text-blue-600 hover:underline">Ver archivo</a></p>' : ''}
+                        `;
+                        ticketsList.appendChild(ticketDiv);
+                    }
+                });
+                if (ticketsList.children.length === 0) {
+                    ticketsList.innerHTML = '<p class="text-gray-500 text-center">No hay tickets que coincidan con el filtro.</p>';
+                }
+            }, (error) => {
+                console.error("Error loading tickets:", error);
+            });
+
+            // Update filter on change
+            filterStatus.addEventListener('change', () => {
+                unsubscribe(); // Detener la escucha anterior
+                loadTickets(userId); // Recargar con el nuevo filtro
+            });
+        }
+
+        // Logout
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).then(() => {
+                console.log('Logged out');
+                window.location.href = 'index.html';
+            }).catch((error) => {
+                console.error('Logout error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
